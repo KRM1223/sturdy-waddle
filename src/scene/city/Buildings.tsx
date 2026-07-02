@@ -4,6 +4,8 @@ import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { T } from '../../config/timeline'
 import { clamp01, easeOutBack, mulberry32, rangeProgress } from '../../utils/math'
 import { experience, setExperience } from '../../store/experience'
+import { audioEngine } from '../../audio/AudioEngine'
+import { requestBurst } from '../interactive'
 import { BUILDINGS } from './cityData'
 import { frame, scratch } from '../frameState'
 
@@ -17,6 +19,7 @@ const COUNT = BUILDINGS.length
 export default function Buildings() {
   const meshRef = useRef<THREE.InstancedMesh>(null)
   const frameRef = useRef<THREE.InstancedMesh>(null)
+  const highlightRef = useRef<THREE.Mesh>(null)
   const growthState = useRef<'pre' | 'anim' | 'done'>('pre')
 
   const geometry = useMemo(() => {
@@ -198,12 +201,25 @@ export default function Buildings() {
   })
 
   const hoverId = useRef<number>(-1)
+  const placeHighlight = (id: number) => {
+    const box = highlightRef.current
+    if (!box) return
+    if (id < 0) {
+      box.visible = false
+      return
+    }
+    const b = BUILDINGS[id]
+    box.visible = true
+    box.position.set(b.x, 0, b.z)
+    box.scale.set(b.width + 1.1, b.height + 1.1, b.depth + 1.1)
+  }
   const onMove = (e: ThreeEvent<PointerEvent>) => {
     if (experience.isCoarsePointer || frame.p < T.buildings[0]) return
     e.stopPropagation()
     const id = e.instanceId ?? -1
     if (id !== hoverId.current) {
       hoverId.current = id
+      placeHighlight(id)
       setExperience({
         hoveredBuilding: id >= 0 ? BUILDINGS[id] : null,
         hoverPoint: { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY },
@@ -216,9 +232,26 @@ export default function Buildings() {
   const onOut = () => {
     if (hoverId.current !== -1) {
       hoverId.current = -1
+      placeHighlight(-1)
       setExperience({ hoveredBuilding: null })
       document.body.style.cursor = ''
     }
+  }
+  const onClick = (e: ThreeEvent<MouseEvent>) => {
+    // tap a tower to celebrate from its roof
+    if (frame.p < T.alive[0]) return
+    e.stopPropagation()
+    const id = e.instanceId ?? -1
+    if (id < 0) return
+    const b = BUILDINGS[id]
+    requestBurst({
+      x: b.x,
+      y: b.height + 14 + Math.random() * 10,
+      z: b.z,
+      hue: Math.random(),
+      radius: 14 + Math.random() * 8,
+    })
+    audioEngine.fireworkPop()
   }
 
   return (
@@ -231,8 +264,19 @@ export default function Buildings() {
         receiveShadow
         onPointerMove={onMove}
         onPointerOut={onOut}
+        onClick={onClick}
       />
       <instancedMesh ref={frameRef} args={[geometry, frameMaterial, COUNT]} visible={false} />
+      {/* Hover highlight — a glowing shell around the inspected tower */}
+      <mesh ref={highlightRef} geometry={geometry} visible={false}>
+        <meshBasicMaterial
+          color="#9be3ff"
+          transparent
+          opacity={0.16}
+          depthWrite={false}
+          side={THREE.BackSide}
+        />
+      </mesh>
     </group>
   )
 }

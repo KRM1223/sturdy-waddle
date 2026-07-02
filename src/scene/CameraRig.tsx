@@ -30,15 +30,15 @@ export default function CameraRig() {
 
     // Pointer parallax + idle breathing (disabled for reduced motion)
     if (!experience.reducedMotion) {
-      pointer.current.x = damp(pointer.current.x, p3f.x, 3, dt)
-      pointer.current.y = damp(pointer.current.y, p3f.y, 3, dt)
-      const scale = 1 + p * 8 // parallax grows with altitude
-      targetPos.x += pointer.current.x * 2.2 * scale
-      targetPos.y += pointer.current.y * 1.1 * scale + Math.sin(frame.time * 0.4) * 0.5
+      pointer.current.x = damp(pointer.current.x, p3f.x, 2.6, dt)
+      pointer.current.y = damp(pointer.current.y, p3f.y, 2.6, dt)
+      const scale = 1 + p * 9 // parallax grows with altitude
+      targetPos.x += pointer.current.x * 3.4 * scale
+      targetPos.y += pointer.current.y * 1.8 * scale + Math.sin(frame.time * 0.4) * 0.5
       targetPos.z += Math.cos(frame.time * 0.31) * 0.4
     }
 
-    const lambda = 3.4
+    const lambda = 2.7
     camera.position.x = damp(camera.position.x, targetPos.x, lambda, dt)
     camera.position.y = damp(camera.position.y, targetPos.y, lambda, dt)
     camera.position.z = damp(camera.position.z, targetPos.z, lambda, dt)

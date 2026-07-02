@@ -46,13 +46,15 @@ function makeSwayMaterial(base: THREE.MeshStandardMaterial, strength: number) {
   base.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = { value: 0 }
     shader.uniforms.uWind = { value: 1 }
+    shader.uniforms.uCursor = { value: new THREE.Vector3(0, -999, 0) }
     base.userData.shader = shader
     shader.vertexShader = shader.vertexShader
       .replace(
         '#include <common>',
         `#include <common>
          uniform float uTime;
-         uniform float uWind;`,
+         uniform float uWind;
+         uniform vec3 uCursor;`,
       )
       .replace(
         '#include <begin_vertex>',
@@ -63,6 +65,13 @@ function makeSwayMaterial(base: THREE.MeshStandardMaterial, strength: number) {
            float bendAmount = max(transformed.y, 0.0) * ${strength.toFixed(3)};
            transformed.x += sin(uTime * 1.6 + phase) * bendAmount * uWind;
            transformed.z += cos(uTime * 1.1 + phase * 1.3) * bendAmount * 0.6 * uWind;
+           // cursor gust — plants lean away from the pointer like a hand through grass
+           vec2 away = wp.xz - uCursor.xz;
+           float cursorDist = length(away);
+           float gust = exp(-cursorDist * cursorDist / 260.0) * max(transformed.y, 0.0);
+           if (cursorDist > 0.001) {
+             transformed.xz += normalize(away) * gust * ${(strength * 6).toFixed(3)};
+           }
          }`,
       )
   }
@@ -126,14 +135,25 @@ export default function Vegetation() {
       if (flowerRef.current.instanceColor) flowerRef.current.instanceColor.needsUpdate = true
     }
 
-    // Drive the wind
+    // Drive the wind + cursor gust
     for (const mat of [canopyMaterial, flowerMaterial]) {
       const shader = mat.userData.shader as
-        | { uniforms: { uTime: { value: number }; uWind: { value: number } } }
+        | {
+            uniforms: {
+              uTime: { value: number }
+              uWind: { value: number }
+              uCursor: { value: THREE.Vector3 }
+            }
+          }
         | undefined
       if (shader) {
         shader.uniforms.uTime.value = frame.time
         shader.uniforms.uWind.value = experience.reducedMotion ? 0.15 : frame.windStrength
+        if (frame.cursorActive && !experience.reducedMotion) {
+          shader.uniforms.uCursor.value.copy(frame.cursor)
+        } else {
+          shader.uniforms.uCursor.value.set(0, -999, 9999)
+        }
       }
     }
     // Snow whitens canopies

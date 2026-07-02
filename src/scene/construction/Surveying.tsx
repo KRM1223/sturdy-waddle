@@ -14,6 +14,8 @@ export default function Surveying() {
   const markersRef = useRef<THREE.InstancedMesh>(null)
   const flagsRef = useRef<THREE.InstancedMesh>(null)
   const workersRef = useRef<THREE.InstancedMesh>(null)
+  const workerHeadsRef = useRef<THREE.InstancedMesh>(null)
+  const helmetsRef = useRef<THREE.InstancedMesh>(null)
   const trucksRef = useRef<THREE.Group>(null)
   const dronesRef = useRef<THREE.Group>(null)
   const excArmRefs = useRef<(THREE.Group | null)[]>([])
@@ -102,8 +104,8 @@ export default function Surveying() {
       flagsRef.current.instanceMatrix.needsUpdate = true
     }
 
-    // Workers wander in small loops with a walking bob
-    if (workersRef.current) {
+    // Workers wander in small loops with a walking bob — hi-vis vests, hard hats
+    if (workersRef.current && workerHeadsRef.current && helmetsRef.current) {
       workers.forEach((w, i) => {
         const a = frame.time * w.speed + w.phase
         const x = w.cx + Math.cos(a) * w.radius
@@ -112,13 +114,27 @@ export default function Surveying() {
         scratch.euler.set(0, -a, 0)
         scratch.quat.setFromEuler(scratch.euler)
         scratch.mat4.compose(
-          scratch.v3a.set(x, bob, z),
+          scratch.v3a.set(x, (0.88 + bob) * presence, z),
           scratch.quat,
           scratch.v3b.setScalar(presence),
         )
         workersRef.current!.setMatrixAt(i, scratch.mat4)
+        scratch.mat4.compose(
+          scratch.v3a.set(x, (1.72 + bob) * presence, z),
+          scratch.quat,
+          scratch.v3b.setScalar(presence),
+        )
+        workerHeadsRef.current!.setMatrixAt(i, scratch.mat4)
+        scratch.mat4.compose(
+          scratch.v3a.set(x, (1.86 + bob) * presence, z),
+          scratch.quat,
+          scratch.v3b.setScalar(presence),
+        )
+        helmetsRef.current!.setMatrixAt(i, scratch.mat4)
       })
       workersRef.current.instanceMatrix.needsUpdate = true
+      workerHeadsRef.current.instanceMatrix.needsUpdate = true
+      helmetsRef.current.instanceMatrix.needsUpdate = true
     }
 
     // Trucks drive in from the horizon, brake smoothly, park
@@ -176,10 +192,18 @@ export default function Surveying() {
         <meshStandardMaterial color="#ff5a3c" emissive="#ff5a3c" emissiveIntensity={0.25} side={THREE.DoubleSide} />
       </instancedMesh>
 
-      {/* Workers — hi-vis */}
+      {/* Workers — hi-vis vests, heads, hard hats */}
       <instancedMesh ref={workersRef} args={[undefined, undefined, WORKER_COUNT]}>
-        <capsuleGeometry args={[0.32, 1.1, 3, 8]} />
-        <meshStandardMaterial color="#f2a516" roughness={0.7} />
+        <capsuleGeometry args={[0.3, 0.9, 3, 8]} />
+        <meshStandardMaterial color="#ffb020" roughness={0.7} />
+      </instancedMesh>
+      <instancedMesh ref={workerHeadsRef} args={[undefined, undefined, WORKER_COUNT]}>
+        <sphereGeometry args={[0.22, 8, 8]} />
+        <meshStandardMaterial color="#e0b088" roughness={0.65} />
+      </instancedMesh>
+      <instancedMesh ref={helmetsRef} args={[undefined, undefined, WORKER_COUNT]}>
+        <sphereGeometry args={[0.26, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color="#ffd23f" roughness={0.4} />
       </instancedMesh>
 
       {/* Trucks */}

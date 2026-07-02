@@ -17,6 +17,9 @@ export default function ScrollHint() {
       <span className="font-mono text-[10px] tracking-[0.4em] text-white/55 uppercase">
         Scroll to begin a century
       </span>
+      <span className="font-mono text-[9px] tracking-[0.3em] text-sky-300/60 uppercase">
+        Click the land to plant · tap towers for fireworks
+      </span>
       <motion.span
         animate={{ y: [0, 8, 0] }}
         transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}

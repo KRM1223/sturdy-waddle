@@ -9,7 +9,8 @@ const PEOPLE_COUNT = 140
 const DOG_COUNT = 14
 const CYCLIST_COUNT = 16
 
-const OUTFITS = ['#c96f4f', '#4f6fc9', '#d8cfc0', '#3f4650', '#7fa86e', '#b05684', '#e0b13f', '#5aa8a0']
+const OUTFITS = ['#e0684f', '#4f7de0', '#f0d9b8', '#3f4a5c', '#6fc06e', '#d05a9c', '#f0c03f', '#4fc0b8', '#9c6ad9', '#f09850']
+const SKIN_TONES = ['#f0c8a0', '#e0b088', '#c89068', '#a07048', '#805030', '#f0d8b8']
 
 interface PersonSeed {
   road: number
@@ -20,13 +21,22 @@ interface PersonSeed {
   dir: number
   scale: number // children are smaller
   color: string
+  skin: string
+  stride: number
 }
 
-/** Chapter 8 — pedestrians, children, dogs and cyclists on the sidewalks. */
+/**
+ * Chapter 8 — fully articulated citizens: swinging legs and arms, varied
+ * outfits and skin tones, children, dogs with wagging tails, and cyclists.
+ */
 export default function Citizens() {
-  const bodyRef = useRef<THREE.InstancedMesh>(null)
+  const torsoRef = useRef<THREE.InstancedMesh>(null)
   const headRef = useRef<THREE.InstancedMesh>(null)
-  const dogRef = useRef<THREE.InstancedMesh>(null)
+  const legsRef = useRef<THREE.InstancedMesh>(null)
+  const armsRef = useRef<THREE.InstancedMesh>(null)
+  const dogBodyRef = useRef<THREE.InstancedMesh>(null)
+  const dogHeadRef = useRef<THREE.InstancedMesh>(null)
+  const dogTailRef = useRef<THREE.InstancedMesh>(null)
   const cyclistRef = useRef<THREE.InstancedMesh>(null)
   const wheelRef = useRef<THREE.InstancedMesh>(null)
 
@@ -42,6 +52,8 @@ export default function Citizens() {
       dir: rand() > 0.5 ? 1 : -1,
       scale: i % 9 === 0 ? 0.55 : 0.9 + rand() * 0.25, // every ninth is a child
       color: OUTFITS[Math.floor(rand() * OUTFITS.length)],
+      skin: SKIN_TONES[Math.floor(rand() * SKIN_TONES.length)],
+      stride: 0.4 + rand() * 0.25,
     }))
   }, [])
 
@@ -50,6 +62,7 @@ export default function Citizens() {
     return Array.from({ length: DOG_COUNT }, () => ({
       owner: Math.floor(rand() * PEOPLE_COUNT),
       wag: rand() * Math.PI * 2,
+      coat: rand(),
     }))
   }, [])
 
@@ -65,6 +78,18 @@ export default function Citizens() {
     }))
   }, [])
 
+  // Limb geometries hang from their joints so a simple X-rotation swings them
+  const legGeometry = useMemo(() => {
+    const geo = new THREE.BoxGeometry(0.15, 0.68, 0.15)
+    geo.translate(0, -0.34, 0)
+    return geo
+  }, [])
+  const armGeometry = useMemo(() => {
+    const geo = new THREE.BoxGeometry(0.11, 0.55, 0.11)
+    geo.translate(0, -0.275, 0)
+    return geo
+  }, [])
+
   const colorsSet = useRef(false)
   const personPos = useMemo(() => people.map(() => new THREE.Vector3()), [people])
 
@@ -75,28 +100,53 @@ export default function Citizens() {
       rangeProgress(p, T.alive[0], T.alive[0] + 0.045) *
       (1 - frame.rain * 0.6) *
       (1 - frame.storm * 0.9)
-    const body = bodyRef.current
+    const torso = torsoRef.current
     const head = headRef.current
-    if (!body || !head) return
+    const legs = legsRef.current
+    const arms = armsRef.current
+    if (!torso || !head || !legs || !arms) return
 
     if (!colorsSet.current) {
       colorsSet.current = true
       const c = new THREE.Color()
-      people.forEach((person, i) => body.setColorAt(i, c.set(person.color)))
-      if (body.instanceColor) body.instanceColor.needsUpdate = true
+      people.forEach((person, i) => {
+        torso.setColorAt(i, c.set(person.color))
+        head.setColorAt(i, c.set(person.skin))
+        arms.setColorAt(i * 2, c.set(person.color))
+        arms.setColorAt(i * 2 + 1, c.set(person.color))
+      })
+      if (torso.instanceColor) torso.instanceColor.needsUpdate = true
+      if (head.instanceColor) head.instanceColor.needsUpdate = true
+      if (arms.instanceColor) arms.instanceColor.needsUpdate = true
+      if (dogBodyRef.current) {
+        dogs.forEach((dog, i) => {
+          c.setHSL(0.08, 0.35 + dog.coat * 0.25, 0.28 + dog.coat * 0.3)
+          dogBodyRef.current!.setColorAt(i, c)
+          dogHeadRef.current!.setColorAt(i, c)
+          dogTailRef.current!.setColorAt(i, c)
+        })
+        if (dogBodyRef.current.instanceColor) dogBodyRef.current.instanceColor.needsUpdate = true
+        if (dogHeadRef.current!.instanceColor) dogHeadRef.current!.instanceColor.needsUpdate = true
+        if (dogTailRef.current!.instanceColor) dogTailRef.current!.instanceColor.needsUpdate = true
+      }
     }
 
-    body.visible = density > 0.01
-    head.visible = body.visible
+    const visible = density > 0.01
+    torso.visible = visible
+    head.visible = visible
+    legs.visible = visible
+    arms.visible = visible
     const span = 180
-    if (body.visible) {
+    if (visible) {
       people.forEach((person, i) => {
         const active = i / PEOPLE_COUNT < density ? 1 : 0
+        const s = active * person.scale
         const travel = ((frame.time * person.speed + person.offset) % span) - span / 2
         const along = travel * person.dir
         const x = person.horizontal ? along : person.road + person.side
         const z = person.horizontal ? person.road + person.side : along
-        const bob = Math.abs(Math.sin(frame.time * 7 * person.speed + i)) * 0.08
+        const walkCycle = frame.time * person.speed * 5.2 + i
+        const bob = Math.abs(Math.sin(walkCycle)) * 0.06 * person.scale
         personPos[i].set(x, 0, z)
         const heading = person.horizontal
           ? person.dir > 0
@@ -105,48 +155,116 @@ export default function Citizens() {
           : person.dir > 0
             ? 0
             : Math.PI
-        scratch.euler.set(0, heading, 0)
+        // lateral axis for hip/shoulder offsets
+        const lx = Math.cos(heading)
+        const lz = -Math.sin(heading)
+
+        scratch.euler.set(0, heading, Math.sin(walkCycle * 0.5) * 0.03, 'YXZ')
         scratch.quat.setFromEuler(scratch.euler)
-        const s = active * person.scale
         scratch.mat4.compose(
-          scratch.v3a.set(x, 0.75 * person.scale + bob, z),
+          scratch.v3a.set(x, (1.05 + bob) * person.scale, z),
           scratch.quat,
           scratch.v3b.set(s, s, s),
         )
-        body.setMatrixAt(i, scratch.mat4)
+        torso.setMatrixAt(i, scratch.mat4)
         scratch.mat4.compose(
-          scratch.v3a.set(x, 1.62 * person.scale + bob, z),
+          scratch.v3a.set(x, (1.78 + bob) * person.scale, z),
           scratch.quat,
           scratch.v3b.set(s, s, s),
         )
         head.setMatrixAt(i, scratch.mat4)
+
+        // legs swing in opposite phase; arms counter-swing
+        for (let side = 0; side < 2; side++) {
+          const sign = side === 0 ? 1 : -1
+          const legSwing = Math.sin(walkCycle + side * Math.PI) * person.stride
+          scratch.euler.set(legSwing, heading, 0, 'YXZ')
+          scratch.quat.setFromEuler(scratch.euler)
+          scratch.mat4.compose(
+            scratch.v3a.set(
+              x + lx * sign * 0.13 * person.scale,
+              (0.72 + bob) * person.scale,
+              z + lz * sign * 0.13 * person.scale,
+            ),
+            scratch.quat,
+            scratch.v3b.set(s, s, s),
+          )
+          legs.setMatrixAt(i * 2 + side, scratch.mat4)
+
+          const armSwing = Math.sin(walkCycle + (1 - side) * Math.PI) * person.stride * 0.8
+          scratch.euler.set(armSwing, heading, sign * 0.12, 'YXZ')
+          scratch.quat.setFromEuler(scratch.euler)
+          scratch.mat4.compose(
+            scratch.v3a.set(
+              x + lx * sign * 0.34 * person.scale,
+              (1.42 + bob) * person.scale,
+              z + lz * sign * 0.34 * person.scale,
+            ),
+            scratch.quat,
+            scratch.v3b.set(s, s, s),
+          )
+          arms.setMatrixAt(i * 2 + side, scratch.mat4)
+        }
       })
-      body.instanceMatrix.needsUpdate = true
+      torso.instanceMatrix.needsUpdate = true
       head.instanceMatrix.needsUpdate = true
+      legs.instanceMatrix.needsUpdate = true
+      arms.instanceMatrix.needsUpdate = true
     }
 
-    if (dogRef.current) {
-      dogRef.current.visible = body.visible
+    if (dogBodyRef.current && dogHeadRef.current && dogTailRef.current) {
+      dogBodyRef.current.visible = visible
+      dogHeadRef.current.visible = visible
+      dogTailRef.current.visible = visible
       dogs.forEach((dog, i) => {
         const owner = people[dog.owner]
         const active = dog.owner / PEOPLE_COUNT < density ? 1 : 0
         const op = personPos[dog.owner]
         const trot = Math.abs(Math.sin(frame.time * 9 + dog.wag)) * 0.05
-        scratch.euler.set(0, Math.sin(frame.time * 2 + dog.wag) * 0.3, 0)
+        const dx = op.x + (owner.horizontal ? 0 : 0.9)
+        const dz = op.z + (owner.horizontal ? 0.9 : 0)
+        const heading = owner.horizontal
+          ? owner.dir > 0
+            ? Math.PI / 2
+            : -Math.PI / 2
+          : owner.dir > 0
+            ? 0
+            : Math.PI
+        scratch.euler.set(0, heading, 0)
         scratch.quat.setFromEuler(scratch.euler)
         scratch.mat4.compose(
-          scratch.v3a.set(op.x + (owner.horizontal ? 0 : 0.9), 0.28 + trot, op.z + (owner.horizontal ? 0.9 : 0)),
+          scratch.v3a.set(dx, 0.32 + trot, dz),
           scratch.quat,
           scratch.v3b.setScalar(active),
         )
-        dogRef.current!.setMatrixAt(i, scratch.mat4)
+        dogBodyRef.current!.setMatrixAt(i, scratch.mat4)
+        // head forward of the body
+        const fx = Math.sin(heading)
+        const fz = Math.cos(heading)
+        scratch.mat4.compose(
+          scratch.v3a.set(dx + fx * 0.5, 0.5 + trot, dz + fz * 0.5),
+          scratch.quat,
+          scratch.v3b.setScalar(active),
+        )
+        dogHeadRef.current!.setMatrixAt(i, scratch.mat4)
+        // wagging tail behind
+        scratch.euler.set(-0.7, heading + Math.sin(frame.time * 11 + dog.wag) * 0.55, 0, 'YXZ')
+        scratch.quat.setFromEuler(scratch.euler)
+        scratch.mat4.compose(
+          scratch.v3a.set(dx - fx * 0.45, 0.46 + trot, dz - fz * 0.45),
+          scratch.quat,
+          scratch.v3b.setScalar(active),
+        )
+        dogTailRef.current!.setMatrixAt(i, scratch.mat4)
       })
-      dogRef.current.instanceMatrix.needsUpdate = true
+      dogBodyRef.current.instanceMatrix.needsUpdate = true
+      dogHeadRef.current.instanceMatrix.needsUpdate = true
+      dogTailRef.current.instanceMatrix.needsUpdate = true
     }
 
     if (cyclistRef.current && wheelRef.current) {
-      cyclistRef.current.visible = body.visible
-      wheelRef.current.visible = body.visible
+      cyclistRef.current.visible = visible
+      wheelRef.current.visible = visible
       cyclists.forEach((cy, i) => {
         const active = i / CYCLIST_COUNT < density ? 1 : 0
         const travel = ((frame.time * cy.speed + cy.offset) % span) - span / 2
@@ -160,7 +278,7 @@ export default function Citizens() {
           : cy.dir > 0
             ? 0
             : Math.PI
-        scratch.euler.set(0, heading, Math.sin(frame.time * 3 + i) * 0.05)
+        scratch.euler.set(0.32, heading, Math.sin(frame.time * 3 + i) * 0.05, 'YXZ')
         scratch.quat.setFromEuler(scratch.euler)
         scratch.mat4.compose(
           scratch.v3a.set(x, 1, z),
@@ -168,7 +286,6 @@ export default function Citizens() {
           scratch.v3b.setScalar(active * 0.85),
         )
         cyclistRef.current!.setMatrixAt(i, scratch.mat4)
-        // two wheels
         for (let w = 0; w < 2; w++) {
           const wOff = w === 0 ? 0.55 : -0.55
           scratch.euler.set(0, heading + Math.PI / 2, 0)
@@ -192,18 +309,34 @@ export default function Citizens() {
 
   return (
     <group>
-      <instancedMesh ref={bodyRef} args={[undefined, undefined, PEOPLE_COUNT]} visible={false}>
-        <capsuleGeometry args={[0.26, 0.85, 3, 8]} />
-        <meshStandardMaterial roughness={0.75} />
+      <instancedMesh ref={torsoRef} args={[undefined, undefined, PEOPLE_COUNT]} visible={false}>
+        <capsuleGeometry args={[0.24, 0.6, 3, 8]} />
+        <meshStandardMaterial roughness={0.7} />
       </instancedMesh>
       <instancedMesh ref={headRef} args={[undefined, undefined, PEOPLE_COUNT]} visible={false}>
         <sphereGeometry args={[0.21, 8, 8]} />
-        <meshStandardMaterial color="#e8c39a" roughness={0.7} />
+        <meshStandardMaterial roughness={0.65} />
       </instancedMesh>
-      <instancedMesh ref={dogRef} args={[undefined, undefined, DOG_COUNT]} visible={false}>
-        <boxGeometry args={[0.35, 0.4, 0.85]} />
-        <meshStandardMaterial color="#8a6a48" roughness={0.85} />
+      <instancedMesh ref={legsRef} args={[legGeometry, undefined, PEOPLE_COUNT * 2]} visible={false}>
+        <meshStandardMaterial color="#2c3240" roughness={0.8} />
       </instancedMesh>
+      <instancedMesh ref={armsRef} args={[armGeometry, undefined, PEOPLE_COUNT * 2]} visible={false}>
+        <meshStandardMaterial roughness={0.7} />
+      </instancedMesh>
+
+      <instancedMesh ref={dogBodyRef} args={[undefined, undefined, DOG_COUNT]} visible={false}>
+        <boxGeometry args={[0.32, 0.34, 0.8]} />
+        <meshStandardMaterial roughness={0.85} />
+      </instancedMesh>
+      <instancedMesh ref={dogHeadRef} args={[undefined, undefined, DOG_COUNT]} visible={false}>
+        <boxGeometry args={[0.26, 0.26, 0.3]} />
+        <meshStandardMaterial roughness={0.85} />
+      </instancedMesh>
+      <instancedMesh ref={dogTailRef} args={[undefined, undefined, DOG_COUNT]} visible={false}>
+        <boxGeometry args={[0.07, 0.34, 0.07]} />
+        <meshStandardMaterial roughness={0.85} />
+      </instancedMesh>
+
       <instancedMesh ref={cyclistRef} args={[undefined, undefined, CYCLIST_COUNT]} visible={false}>
         <capsuleGeometry args={[0.24, 0.7, 3, 8]} />
         <meshStandardMaterial color="#3f7fc9" roughness={0.6} />

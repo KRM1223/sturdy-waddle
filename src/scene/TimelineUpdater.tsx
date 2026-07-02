@@ -15,17 +15,17 @@ import {
   STORM,
 } from '../config/atmosphere'
 import { T } from '../config/timeline'
-import { frame } from './frameState'
+import { frame, scratch } from './frameState'
 
 /** Runs before every other system each frame and derives all shared factors. */
 export default function TimelineUpdater() {
-  useFrame((_, rawDt) => {
+  useFrame(({ camera, pointer }, rawDt) => {
     const dt = Math.min(rawDt, 0.05)
     frame.dt = dt
     frame.time += dt
 
     // Damped progress — the single heartbeat of the experience
-    frame.p = damp(frame.p, experience.progress, 4.2, dt)
+    frame.p = damp(frame.p, experience.progress, 3.1, dt)
     experience.smoothProgress = frame.p
     const p = frame.p
 
@@ -67,6 +67,18 @@ export default function TimelineUpdater() {
       audioEngine.thunder()
     }
 
+    // Project the pointer onto the ground plane — vegetation parts around it
+    scratch.v3a.set(pointer.x, pointer.y, 0.5).unproject(camera)
+    scratch.v3a.sub(camera.position).normalize()
+    if (scratch.v3a.y < -0.02 && camera.position.y > 0) {
+      const t = -camera.position.y / scratch.v3a.y
+      frame.cursor.copy(camera.position).addScaledVector(scratch.v3a, t)
+      frame.cursorActive = t < 600
+    } else {
+      frame.cursorActive = false
+    }
+
+    audioEngine.setListener(camera.position, frame.underground)
     audioEngine.update(p, dt)
     if (!experience.ready) setExperience({ ready: true })
   }, -100)

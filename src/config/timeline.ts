@@ -4,7 +4,7 @@ import type { PhaseDef } from '../types'
  * Master timeline. The whole experience is one normalized scroll value 0..1;
  * every scene, light, sound and camera move is keyed against these ranges.
  */
-export const SCROLL_PAGES = 16 // total scroll height in viewport-heights ≈ pages * 100vh
+export const SCROLL_PAGES = 18 // total scroll height in viewport-heights ≈ pages * 100vh
 
 export const PHASES: PhaseDef[] = [
   {

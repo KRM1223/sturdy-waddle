@@ -1,6 +1,12 @@
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
+import {
+  Bloom,
+  BrightnessContrast,
+  EffectComposer,
+  HueSaturation,
+  Vignette,
+} from '@react-three/postprocessing'
 import type { BloomEffect, VignetteEffect } from 'postprocessing'
 import { BLOOM, VIGNETTE } from '../config/atmosphere'
 import { sampleNumberKeys } from '../utils/math'
@@ -29,6 +35,8 @@ export default function Effects() {
         luminanceSmoothing={0.32}
         mipmapBlur
       />
+      <HueSaturation saturation={0.22} />
+      <BrightnessContrast brightness={0.03} contrast={0.08} />
       <Vignette ref={vignetteRef} eskil={false} offset={0.22} darkness={0.36} />
     </EffectComposer>
   )

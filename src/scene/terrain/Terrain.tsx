@@ -8,8 +8,8 @@ import { frame, scratch } from '../frameState'
 
 const SEGMENTS = 220
 
-const grass = new THREE.Color('#6fae5c')
-const grassDry = new THREE.Color('#8fb763')
+const grass = new THREE.Color('#62bc50')
+const grassDry = new THREE.Color('#9ecb58')
 const rock = new THREE.Color('#8d8478')
 const snowCap = new THREE.Color('#eef3f6')
 const soil = new THREE.Color('#9a7d55')
@@ -69,7 +69,7 @@ export default function Terrain() {
     mat.color
       .copy(scratch.colorA.set('#ffffff'))
       .lerp(scratch.colorB.set('#dfe8f2'), snowTint)
-      .multiplyScalar(1 - frame.night * 0.55)
+      .multiplyScalar(1 - frame.night * 0.45)
 
     const grade = rangeProgress(frame.p, T.survey[0], T.roads[1])
     const stage = Math.round(grade * 24)

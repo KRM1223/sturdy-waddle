@@ -86,10 +86,10 @@ export function buildRoadSegments(): RoadSegment[] {
 }
 
 const DISTRICT_PALETTES = {
-  skyscraper: ['#9fb4c8', '#b7c9d9', '#8ba3bd', '#c3d2de', '#a5bccf'],
-  commercial: ['#c9b8a4', '#d6c3ab', '#b3a58f', '#cfc0ae', '#c0ad93'],
-  residential: ['#d9cfc0', '#e2d5c2', '#cbbfae', '#d5c6b1', '#e6dccb'],
-  industrial: ['#98a1a8', '#a8b0b5', '#8d969e', '#b0b8bd', '#9aa4ab'],
+  skyscraper: ['#9fc4e8', '#b7d9ef', '#8bb3d9', '#c3e0f0', '#a5d0e8', '#7fa8d9'],
+  commercial: ['#e8c9a0', '#f0d5a8', '#d9a878', '#e8b88a', '#d9c49a', '#e0a070'],
+  residential: ['#f0d9c0', '#e8b8a0', '#f0e0b8', '#d9c8e8', '#f0c8c0', '#c8e0d0', '#e8d0a8'],
+  industrial: ['#a8b8c0', '#b8c8cd', '#9daeb8', '#c0ced4', '#aabcc4'],
 } as const
 
 const NAMES = {

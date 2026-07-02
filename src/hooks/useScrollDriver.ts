@@ -29,11 +29,11 @@ export function useScrollDriver(trackRef: React.RefObject<HTMLDivElement | null>
     if (!track) return
 
     const lenis = new Lenis({
-      duration: 1.35,
+      duration: 1.9,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-      touchMultiplier: 1.6,
-      wheelMultiplier: 0.95,
+      touchMultiplier: 1.5,
+      wheelMultiplier: 0.8,
     })
     lenisRef.current = lenis
     lenis.on('scroll', ScrollTrigger.update)

@@ -25,6 +25,9 @@ export const frame = {
   rainbow: 0,
   wireframe: false,
   windStrength: 1,
+  /** Pointer projected onto the ground plane — drives cursor wind & interactions */
+  cursor: new THREE.Vector3(0, 0, 0),
+  cursorActive: false,
 }
 
 export const scratch = {

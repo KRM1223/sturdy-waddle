@@ -8,11 +8,11 @@ import type { ColorKey, NumberKey, Vec3Key } from '../types'
  */
 
 export const SKY_TOP: ColorKey[] = [
-  { t: 0.0, v: '#8ec9e8' },
-  { t: 0.12, v: '#6fb4e0' },
-  { t: 0.3, v: '#5aa7dd' },
-  { t: 0.5, v: '#4f9ad4' },
-  { t: 0.6, v: '#3f6fb5' },
+  { t: 0.0, v: '#7ecbf5' },
+  { t: 0.12, v: '#57b6f0' },
+  { t: 0.3, v: '#3fa7ee' },
+  { t: 0.5, v: '#3d9de6' },
+  { t: 0.6, v: '#3f6fc5' },
   { t: 0.675, v: '#2b3a75' },
   { t: 0.7, v: '#0d1230' },
   { t: 0.718, v: '#141a33' },
@@ -27,12 +27,12 @@ export const SKY_TOP: ColorKey[] = [
 ]
 
 export const SKY_HORIZON: ColorKey[] = [
-  { t: 0.0, v: '#ffe6c2' },
-  { t: 0.12, v: '#e9f2f2' },
-  { t: 0.3, v: '#d8ecf4' },
-  { t: 0.5, v: '#ffd9a8' },
-  { t: 0.6, v: '#ffb377' },
-  { t: 0.675, v: '#ff8e5e' },
+  { t: 0.0, v: '#ffe2ae' },
+  { t: 0.12, v: '#e6f6f4' },
+  { t: 0.3, v: '#d2f0f8' },
+  { t: 0.5, v: '#ffd292' },
+  { t: 0.6, v: '#ff9e5e' },
+  { t: 0.675, v: '#ff7a4e' },
   { t: 0.7, v: '#2c3a66' },
   { t: 0.718, v: '#2a3352' },
   { t: 0.732, v: '#1c2340' },
@@ -71,29 +71,29 @@ export const SUN_COLOR: ColorKey[] = [
 ]
 
 export const SUN_INTENSITY: NumberKey[] = [
-  { t: 0.0, v: 2.6 },
-  { t: 0.3, v: 3.2 },
-  { t: 0.6, v: 2.6 },
-  { t: 0.675, v: 1.9 },
-  { t: 0.7, v: 0.35 },
-  { t: 0.726, v: 0.22 },
-  { t: 0.745, v: 1.4 },
-  { t: 0.755, v: 2.2 },
-  { t: 0.775, v: 0.4 },
-  { t: 0.86, v: 0.32 },
-  { t: 0.94, v: 0.15 },
+  { t: 0.0, v: 3.3 },
+  { t: 0.3, v: 4.0 },
+  { t: 0.6, v: 3.3 },
+  { t: 0.675, v: 2.4 },
+  { t: 0.7, v: 0.5 },
+  { t: 0.726, v: 0.3 },
+  { t: 0.745, v: 1.8 },
+  { t: 0.755, v: 2.8 },
+  { t: 0.775, v: 0.55 },
+  { t: 0.86, v: 0.45 },
+  { t: 0.94, v: 0.2 },
 ]
 
 export const AMBIENT_INTENSITY: NumberKey[] = [
-  { t: 0.0, v: 0.75 },
-  { t: 0.4, v: 0.85 },
-  { t: 0.66, v: 0.62 },
-  { t: 0.7, v: 0.3 },
-  { t: 0.745, v: 0.55 },
-  { t: 0.755, v: 0.75 },
-  { t: 0.78, v: 0.34 },
-  { t: 0.9, v: 0.26 },
-  { t: 1.0, v: 0.12 },
+  { t: 0.0, v: 0.95 },
+  { t: 0.4, v: 1.05 },
+  { t: 0.66, v: 0.8 },
+  { t: 0.7, v: 0.42 },
+  { t: 0.745, v: 0.7 },
+  { t: 0.755, v: 0.95 },
+  { t: 0.78, v: 0.46 },
+  { t: 0.9, v: 0.36 },
+  { t: 1.0, v: 0.16 },
 ]
 
 /** Sun direction — azimuth sweeps through the day, elevation follows. */
@@ -229,8 +229,8 @@ export const BLOOM: NumberKey[] = [
 ]
 
 export const VIGNETTE: NumberKey[] = [
-  { t: 0.0, v: 0.32 },
-  { t: 0.7, v: 0.42 },
-  { t: 0.9, v: 0.5 },
-  { t: 1.0, v: 0.72 },
+  { t: 0.0, v: 0.22 },
+  { t: 0.7, v: 0.34 },
+  { t: 0.9, v: 0.42 },
+  { t: 1.0, v: 0.68 },
 ]

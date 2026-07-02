@@ -3,16 +3,22 @@ import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { audioEngine } from '../../audio/AudioEngine'
 import { rangeWindow } from '../../utils/math'
+import { burstQueue } from '../interactive'
 import { frame } from '../frameState'
 
-const BURSTS = 5
+const BURSTS = 6
 const PARTICLES = 110
 
-/** Chapter 11 — a pool of shader-driven firework bursts over the festival. */
+/**
+ * A pooled particle-burst system. It plays the festival firework show on its
+ * own, and it also answers the visitor — clicks anywhere in the world push
+ * bursts (fireworks, dust, leaves) into the same pool.
+ */
 export default function Fireworks() {
   const pointsRef = useRef<THREE.Points>(null)
   const nextLaunch = useRef(0)
   const burstIndex = useRef(0)
+  const lastActivity = useRef(-100)
 
   const { geometry, uniforms } = useMemo(() => {
     const positions = new Float32Array(BURSTS * PARTICLES * 3)
@@ -41,29 +47,53 @@ export default function Fireworks() {
     const uni = {
       uTime: { value: 0 },
       uStarts: { value: new Float32Array(BURSTS).fill(-100) },
+      uRadii: { value: new Float32Array(BURSTS).fill(20) },
       uOrigins: { value: Array.from({ length: BURSTS }, () => new THREE.Vector3()) },
       uColors: { value: Array.from({ length: BURSTS }, () => new THREE.Color()) },
     }
     return { geometry: geo, uniforms: uni }
   }, [])
 
+  const launch = (x: number, y: number, z: number, color: THREE.Color, radius: number) => {
+    const b = burstIndex.current
+    burstIndex.current = (b + 1) % BURSTS
+    uniforms.uStarts.value[b] = frame.time
+    uniforms.uRadii.value[b] = radius
+    uniforms.uOrigins.value[b].set(x, y, z)
+    uniforms.uColors.value[b].copy(color)
+    lastActivity.current = frame.time
+  }
+
+  const scratchColor = useMemo(() => new THREE.Color(), [])
+
   useFrame(() => {
     uniforms.uTime.value = frame.time
+
+    // Visitor-requested bursts take priority
+    while (burstQueue.length > 0) {
+      const req = burstQueue.shift()!
+      if (req.hue < 0) scratchColor.setHSL(0.09, 0.45, 0.42) // earth dust
+      else scratchColor.setHSL(req.hue, 0.85, 0.6)
+      launch(req.x, req.y, req.z, scratchColor, req.radius)
+    }
+
+    // The festival runs its own show
     const festival = rangeWindow(frame.p, 0.77, 0.84, 0.015)
     const show = festival * frame.night
-    if (pointsRef.current) pointsRef.current.visible = show > 0.05
     if (show > 0.25 && frame.time > nextLaunch.current) {
       nextLaunch.current = frame.time + 0.9 + Math.random() * 1.3
-      const b = burstIndex.current
-      burstIndex.current = (b + 1) % BURSTS
-      uniforms.uStarts.value[b] = frame.time
-      uniforms.uOrigins.value[b].set(
+      launch(
         (Math.random() - 0.5) * 90,
         55 + Math.random() * 30,
         (Math.random() - 0.5) * 90,
+        scratchColor.setHSL(Math.random(), 0.85, 0.62),
+        18 + Math.random() * 10,
       )
-      uniforms.uColors.value[b].setHSL(Math.random(), 0.85, 0.62)
       audioEngine.fireworkPop()
+    }
+
+    if (pointsRef.current) {
+      pointsRef.current.visible = frame.time - lastActivity.current < 3
     }
   })
 
@@ -81,6 +111,7 @@ export default function Fireworks() {
           attribute float aBurst;
           uniform float uTime;
           uniform float uStarts[${BURSTS}];
+          uniform float uRadii[${BURSTS}];
           uniform vec3 uOrigins[${BURSTS}];
           uniform vec3 uColors[${BURSTS}];
           varying float vLife;
@@ -92,9 +123,9 @@ export default function Fireworks() {
             float t = clamp(age / duration, 0.0, 1.0);
             vLife = 1.0 - t;
             vColor = uColors[b];
-            float radius = (18.0 + aSeed * 10.0) * (1.0 - pow(1.0 - t, 3.0));
+            float radius = uRadii[b] * (0.7 + aSeed * 0.55) * (1.0 - pow(1.0 - t, 3.0));
             vec3 pos = uOrigins[b] + aDir * radius;
-            pos.y -= t * t * 14.0; // gravity droop
+            pos.y -= t * t * uRadii[b] * 0.7; // gravity droop scales with the burst
             vec4 mv = modelViewMatrix * vec4(pos, 1.0);
             gl_PointSize = (240.0 * vLife * (0.4 + aSeed * 0.6)) / -mv.z;
             gl_Position = projectionMatrix * mv;

@@ -4,6 +4,7 @@ import { useExperience } from '../store/experience'
 import TimelineUpdater from './TimelineUpdater'
 import CameraRig from './CameraRig'
 import Effects from './Effects'
+import Interactions from './Interactions'
 import Atmosphere from './environment/Atmosphere'
 import SkyDome from './environment/SkyDome'
 import Stars from './environment/Stars'
@@ -12,6 +13,7 @@ import Weather from './environment/Weather'
 import Aurora from './environment/Aurora'
 import SpaceLayer from './environment/SpaceLayer'
 import Birds from './environment/Birds'
+import Balloons from './environment/Balloons'
 import Terrain from './terrain/Terrain'
 import River from './terrain/River'
 import Vegetation from './terrain/Vegetation'
@@ -44,6 +46,9 @@ export default function Experience() {
         powerPreference: 'high-performance',
         stencil: false,
       }}
+      onCreated={({ gl }) => {
+        gl.toneMappingExposure = 1.22
+      }}
     >
       <TimelineUpdater />
       <CameraRig />
@@ -56,6 +61,7 @@ export default function Experience() {
         <Aurora />
         <SpaceLayer />
         {!reducedMotion && <Birds />}
+        <Balloons />
 
         <Terrain />
         <River />
@@ -75,6 +81,7 @@ export default function Experience() {
         <CityLife />
         <FutureCity />
         <Fireworks />
+        <Interactions />
       </Suspense>
       <Effects />
     </Canvas>

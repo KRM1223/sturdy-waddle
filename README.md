@@ -51,8 +51,19 @@ npm run preview   # serve the build
 
 ## Interactions
 
+- **The world answers your clicks, era by era**: click the meadow to plant a
+  tree (with a chime), slam the earth during construction, and launch
+  fireworks over the living city. Tap any tower to celebrate from its roof.
+  Pop a drifting hot-air balloon for confetti.
+- **Move the cursor through the meadow** — grass, flowers and trees part
+  around it like a hand through a field.
 - **Hover** any tower for its dossier (population, power, traffic, pollution,
-  green energy, construction date). **Click** a civic landmark for its story.
+  green energy, construction date) with a glowing highlight shell. **Click**
+  a civic landmark for its story.
+- **Positional audio**: the mix follows the camera — construction hammers over
+  the pits, water babble by the river, festival pads (with a heartbeat kick)
+  near the plaza, traffic in the grid, wind on the ridge, a mains hum
+  underground.
 - Keyboard: `M` mute · `P` pause timeline · `R` replay · `C` free camera ·
   `X` wireframe · `U` underground · `N` night — plus arrow-key scrolling.
 - Right-side rail jumps between chapters.
